@@ -380,23 +380,17 @@ var zoomPlugin = {
 
 			chartInstance.zoom._mouseUpHandler = function(event){
 				if (chartInstance.zoom._dragZoomStart) {
-					var chartArea = chartInstance.chartArea;
-					var yAxis = getYAxis(chartInstance);
-					var beginPoint = chartInstance.zoom._dragZoomStart;
-					var offsetX = beginPoint.target.getBoundingClientRect().left;
-					var startX = Math.min(beginPoint.clientX, event.clientX) - offsetX;
-					var endX = Math.max(beginPoint.clientX, event.clientX) - offsetX;
-					var dragDistance = endX - startX;
-					var chartDistance = chartArea.right - chartArea.left;
-					var zoom = 1 + ((chartDistance - dragDistance) / chartDistance );
-
-					if (dragDistance > 0) {
-						doZoom(chartInstance, zoom, {
-							x: (dragDistance / 2) + startX,
-							y: (yAxis.bottom - yAxis.top) / 2,
-						});
-					}
-
+					helpers.each(chartInstance.scales, function(scale, id) {
+						if (scale.isHorizontal()) {
+							var beginPoint = chartInstance.zoom._dragZoomStart;
+							var offsetX = beginPoint.target.getBoundingClientRect().left;
+							var startX = Math.min(beginPoint.clientX, event.clientX) - offsetX;
+							var endX = Math.max(beginPoint.clientX, event.clientX) - offsetX;
+							var limitObject = scale.options.type == 'time' ? scale.options.time : scale.options.ticks;
+							limitObject.min = scale.getValueForPixel(startX);
+							limitObject.max = scale.getValueForPixel(endX);
+						}
+					});
 					chartInstance.zoom._dragZoomStart = null;
 					chartInstance.zoom._dragZoomEnd = null;
 				}
